@@ -1,0 +1,168 @@
+\documentclass[conference]{IEEEtran} % onecolumn
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{pxfonts}
+\usepackage{listings}
+\usepackage{epstopdf}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+% Define standard verbatim listing style
+\lstdefinestyle{standard}{
+  basicstyle=\fontsize{9}{9}\ttfamily,
+  columns=flexible,
+  breaklines=true,
+  escapechar=\#
+}
+
+\newcommand{\mytilde}{\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}}
+
+
+\begin{document}
+\title{Biometrics: Body Shape Recognition\\
+}
+
+\author{\IEEEauthorblockN{\textbf{David Jones}}
+\IEEEauthorblockA{\textit{School of Electronics and Computer Science} \\
+\textit{University of Southampton}\\
+Southampton, United Kingdom \\
+dsj1n15@ecs.soton.ac.uk}
+}
+\maketitle
+
+\begin{abstract}
+  The role of a biometric system is to identify subjects for purposes including access control and authentication. This report studies the use of body-shape features as a means to classify subjects. The approach taken utilises state-of-the-art neural networks for pose estimation and semantic segmentation before applying more traditional techniques to define feature vectors. The approach has a CCR of 91\% and EER of 33\%. Increasing performance was largely handicapped by the irregularities in the small dataset and lack of subject repetition.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Identification, Body Shape, Limb, Shape Descriptors, Pose Estimation, Semantic Segmentation
+\end{IEEEkeywords}
+
+\section{Introduction}
+\noindent A requirement for a biometric system is being able to to differentiate subjects. Existing image based systems typically use facial recognition [??], whereas video systems may aim to categorise people's gait [??]. This report identifies the feasibility of body-shape features on a small image dataset with side-on and front-on views of each subject. A second dataset with some subjects repeated is then then used to assess classification performance. Datasets are subsets of the Large Southampton Gait Database \cite{shutler:gait_database}, examples shown in Figure \ref{fig:dataset_examples}.
+
+\section{Method}
+\noindent This section details subject feature-vector generation and classification methods.
+
+
+\subsection{Features}
+\noindent The final feature-vectors are made from measurements and moments, which vary depending on the view.
+
+\subsubsection{Subject Mask}
+The first stage of feature extraction was to find which pixels of the input belong to the subject; this is referred to as image segmentation. The subject mask was generated in two stages: 
+\begin{enumerate}
+  \item Semantic segmentation performed by a Convolutional Neural Network (CNN), specifically DeepLabV3 ResNet101 \cite{DBLP:journals/corr/ChenPSA17}. Torchvision's\footnote{Torchvision, https://pytorch.org/docs/stable/torchvision} implementation was used.
+  \item This did not follow the body contours completely (Figure \ref{fig:sem_seg}), so a further green-screen removal stage was done in the HSV colour space. (Figure \ref{fig:sem_seg})
+\end{enumerate}
+This method lead to perfect mask generation for all subjects. Traditional methods including active contours typically failed where there was crossover with the treadmill. 
+
+For an input image, a helpful feature ios 
+Recognising by shape first requires knowing the the locat is in the frame and its extremeties. 
+[https://arxiv.org/abs/1706.05587]
+
+DeepLabV3
+
+
+Integra
+
+TODO: Image of just segmentation, Image with green screen removed, image of final mask, image of contour
+
+
+
+
+\subsubsection{Head Mask Extraction}
+Uses the mask extraction.
+Uses a contour generated from mask.
+Finds neck doing...
+Using the contour.
+
+starting points...?
+image of plots front + side
+Image of side, image of front
+
+
+\subsubsection{Keypoint Estimation}
+Keypoints accurate where there is a definmite point, e.g. nose/ears, not where subjective, e.g. shoulder/pelvis
+This keypoint estimation performed better when a mask was first applied.
+https://arxiv.org/pdf/1703.06870.pdf
+https://pytorch.org/docs/stable/torchvision/models.html#object-detection-instance-segmentation-and-person-keypoint-detection
+Keypoint R-CNN
+
+Initial attempts targetted OpenPose. Therefore it was assumed there would
+
+Initial attempts 
+The chest point 
+
+The 18 points returned by OpenPose
+
+
+
+
+Classification is handled through 
+
+\subsubsection{Measurements}
+Direction
+Angle
+Manhatten
+Euclidain
+
+Height (Top + Bottom of Mask)
+
+\subsection{Classifier}
+\noindent The classifier expects both front-on and side-on views of a subject where the view is inferred as part of feature extraction. The different views use different feature vectors so cannot be directly compared. To this end separate k-nearest-neighbour classifiers are used for each view -- $k=1$ due to lack of repetition in the dataset. These are trained on the \textit{authorised} user set with feature normalisation applied to keep the subject distances between 0 and \mytilde 1. These are combined by taking the mean of the two distance vectors generated allowing classification by further views or repetitions of the same view. A threshold calculated via the EER is applied to limit false classifications. SVMs were considered, however reduced relevance of the easily comparable distance metric and lack of advantages due to the small dataset mean k-NN was preferable.
+\section{Results}
+To assess the system 
+
+Although each classifier had respectable performance individually they will be considered as a combined system for assessment.
+The \texttt{test} dataset (11 classes) were treated as the \textit{authorised} subjects, whereas the \texttt{train} dataset (44 classes) were treated as the \textit{input} subjects. Metrics were calculated as:
+\begin{itemize}
+  \item \textbf{CCR:} Correct Recognition Rate -- Percentage of \textit{input} subjects who were closest to their corresponding \textit{authorised} subject.
+  \item \textbf{FAR:} False Accept Rate -- Percentage of \textit{input} subjects not in the \textit{authorised} dataset who were within the allowed threshold of an \textit{authorised} subject.
+  \item \textbf{FRR:} False Reject Rate -- Percentage of \textit{input} subjects who were not within the threshold of their corresponding \textit{authorised} subject.
+\end{itemize}
+The EER (Equal Error Rate) was used to set the appropriate classification rate.
+The CCR of side-on and front-on are both 55\% separately. However, 
+CCR of side-on and front-on is 55\% respectively.
+It is common for a single extracted feature to perform match badly; this increases the overall distance which leads to the EER threshold having to be increased.
+\subsection{Accuracy}
+
+\subsection{Equal Error Rates (EER)}
+
+\subsection{Speed}
+\noindent A single recognition took 10.2s running on a CPU (Intel i7 8700K). Much of this time was taken up by the segmentation and keypoint detection performed by neural networks. However, these were integrated with GPU support so when tied with a Nvidia GeForce 1080 Ti this time was 0.6s.
+Note that processing took place on images resized to 600 pixels high (same aspect-ratio) and masks/keypoints are cached for the validation set.
+
+\section{Discussion}
+
+
+\subsection{Improvements}
+
+
+\subsection{Considered Approaches}
+Gabor Wavelets
+Insted of applying nearest neighbour to the feature-vectors, bags of features were made on different neig
+
+There is high varience in feature success. Easy to get one outliers. Attempted multiple feature bags so that they could be weighted or combined based on rank.
+
+
+\section{Conclusion}
+
+Future Work: Try on a larger dataset. High varience in the feature success 
+
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv,mybibfile}
+
+%\begin{thebibliography}{00}
+%\bibitem{b1} Bluetooth SIG, \textit{``Bluetooth Market Update
+%2019''}, White Paper, 2018
+%\bibitem{b2} Bluetooth SIG, \textit{``Bluetooth Core Specification
+%v5.1''}, White Paper, Bluetooth SIG, 21st January 2019
+%\end{thebibliography}
+\end{document}
