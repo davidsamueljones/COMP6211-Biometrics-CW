@@ -80,7 +80,6 @@ def calc_eer(
     thresholds = np.linspace(0, 1, trials)
     # valid_indexes = list(range(len(valid_classes)))
     for ti, threshold in enumerate(thresholds):
-        # correct = est_classes[i] == matched[i]
         for ai, attempt_class in enumerate(attempt_classes):
             # Process for should be allowed
             # FRC : Distance Actual < Threshold
@@ -164,7 +163,7 @@ def train_and_classify(fe_pickle_path: str):
         feature_distances = [classifier.data[path]["feature_dists"] for path in paths]
         return np.stack(feature_distances)
 
-    def feature_distances_plot(distances: np.array, name: str, max_rank: int = 3):
+    def feature_distances_plot(distances: np.array, name: str, max_rank: int = 5):
         distances = np.log(distances)
         ranked = np.array(list([scipy.stats.rankdata(row) for row in distances]))
         if max_rank is not None:
@@ -222,7 +221,7 @@ def train_and_classify(fe_pickle_path: str):
         correct_indexes = cr_results["actual_indexes"]
         image = np.full((len(correct_indexes), classes, 3), 220)
         for y, x in enumerate(correct_indexes):
-            image[y, x, :] = (173, 255, 47)
+            image[y, x, :] = (0, 153, 51)
         for y, x in enumerate(cr_results["est_indexes"]):
             if cr_results["wrong_thresholded"][y]:
                 image[y, x, :] = (0x87, 0xCE, 0xEB)

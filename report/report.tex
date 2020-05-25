@@ -83,16 +83,16 @@ Identification, Body Shape, Limb, Shape Descriptors, Pose Estimation, Semantic S
 \end{figure}
 
 \section{Method}
-\noindent This section details feature-vector generation and classification methods. In addition to those mentioned, the Python implementation utilised the common libraries: NumPy\footnote{Numpy, https://numpy.org/} OpenCV\footnote{OpenCV, https://opencv.org/} , PyTorch\footnote{PyTorch, https://pytorch.org/} and SKLearn\footnote{scikit learn, https://scikit-learn.org/},
+\noindent This section details feature-vector generation and classification methods. In addition to those mentioned, the Python implementation utilised the common libraries: NumPy\footnote{Numpy, https://numpy.org/}, OpenCV\footnote{OpenCV, https://opencv.org/} , PyTorch\footnote{PyTorch, https://pytorch.org/}, and SKLearn\footnote{scikit learn, https://scikit-learn.org/}.
 
 
 \subsection{Features}
-\noindent The final feature-vectors are made from a selection of measurements and moments; those used depend on the view. Images were resized to have a height of 600px whilst keeping the same aspect ratio to reduce computation.\\
+\noindent The final feature-vectors are made from a selection of measurements and moments; those used depend on the view (front/side). Input images were resized to have a height of 600px whilst keeping the same aspect ratio to reduce computation.\\
 
 \subsubsection{Subject Mask}
 The first stage of feature extraction was to find which pixels of the input belong to the subject; this is referred to as image segmentation. The subject mask was generated in two stages: 
 \begin{enumerate}
-  \item Semantic segmentation performed by a Convolutional Neural Network (CNN), specifically DeepLabV3 ResNet101 \cite{DBLP:journals/corr/ChenPSA17}. Torchvision's\footnote{Torchvision, https://pytorch.org/docs/stable/)torchvision} implementation was used.
+  \item Semantic segmentation performed by a Convolutional Neural Network (CNN), specifically DeepLabV3 ResNet101 \cite{DBLP:journals/corr/ChenPSA17}. Torchvision's\footnote{Torchvision, https://pytorch.org/docs/stable/torchvision} implementation was used.
   \item This did not follow the body contours completely (Figure \ref{fig:sem_seg}), so a further green-screen removal stage was done in the HSV colour space. (Figure \ref{fig:final_seg})
 \end{enumerate}
 
@@ -108,7 +108,7 @@ The first stage of feature extraction was to find which pixels of the input belo
   \hspace{1.5mm}
   \subfloat[]{\includegraphics[width=0.10\textwidth]{figures/mask_contour.png}}
   \end{tabular}
-  \caption{Masking example: input, semanticly segemented, green screen removed, silhouette with extracted contour points (left--right). Note that the example images are cropped, the actual system accepts full images.}
+  \caption{Masking example: input, semantically segmented, green screen removed, silhouette with extracted contour points (left--right). Note that the example images are cropped, the actual system accepts full images.}
 \end{figure}
 
 
@@ -129,7 +129,7 @@ The first stage of feature extraction was to find which pixels of the input belo
   \caption{Keypoint estimation on two subjects.}\label{fig:poses}
 \end{figure}
 
-\noindent These keypoints were accurate where positioning was not subjective, e.g. for noses, but not always where many positions would be acceptable e.g. the pelvis. Additionally because Z data is not estimated, distances between points cannot take into account depth. Points were therefore mostly used to orientate other features. However, where distances were relatively consistent it was possible to add them to the feature vector; those used are labelled in Figure \ref{fig:measurements}. It would be preferable if these measurements were scale invariant in case the subject stood a different distance from the camera but attempting to normalise off one measurement made the features highly non-differentiable.
+\noindent These keypoints were accurate where positioning was not subjective, e.g. for noses, but not always where many positions would be acceptable e.g. the pelvis. Additionally, because Z data is not estimated, distances between points cannot take into account depth. Points were therefore mostly used to orientate other features. However, where distances were relatively consistent it was possible to add them to the feature vector; those used are labelled in Figure \ref{fig:measurements}. It would be preferable if these measurements were scale invariant in case the subject stood a different distance from the camera, unfortunately, normalising off one measurement made the features highly non-differentiable. The \textit{view} (\textit{direction}) was determined using the width between shoulder points and the relative position of the nose.
 
 \begin{figure}[H]
   \centering
@@ -169,13 +169,14 @@ Some subjects have different clothes between the validation and testsets; this r
   \item Remove proceeding points of the contour to create a contour of just the head.
   \item Convert this contour to a mask.
 \end{enumerate}
-Performing this process results in near-perfect head extractions on which \textit{Hu Moments} are generated for all views.
+\textit{Hu Moments} are generated for head masks for all views.
 
 
 \subsection{Classifier}
-\noindent The classifier expects both front-on and side-on views of a subject where the view is inferred as part of feature extraction. The different views use different feature vectors so cannot be directly compared. To this end separate k-nearest-neighbour classifiers are used for each view -- $k=1$ due to lack of repetition in the dataset. These are trained on the \textit{authorised} user set with feature normalisation applied to keep the subject distances between 0 and \mytilde 1. These are combined by taking the mean of the all distance vectors generated; this allows classification via further views or repetitions of the same view. A threshold calculated via the EER is applied to limit false classifications. SVMs were considered, however reduced relevance of the easily comparable distance metric and lack of advantages due to the small dataset meant k-NN was preferable.
+\noindent The classifier expects both front-on and side-on views of a subject where the view is inferred as part of feature extraction. The different views use different feature vectors so cannot be directly compared. To this end separate k-nearest-neighbour (k-nn) classifiers are used for each view -- $k=1$ due to lack of repetition in the dataset. These are trained on the \textit{authorised} user set with feature normalisation applied to keep the subject distances between 0 and \mytilde 1. These are combined by taking the mean of the all distance vectors generated; this allows classification via further views or repetitions of the same view. A threshold calculated via the EER is applied to limit false classifications. SVMs were considered, however as their advantages are curtailed by the small dataset, and because they reduce the relevance of the easily comparable distance metric, k-nn was preferable.
+
 \section{Results}
-\noindent To assess the system the \texttt{test} dataset (11 classes) were treated as the \textit{authorised} subjects, whereas the \texttt{train} dataset (44 classes) were treated as the \textit{input} subjects. The resultant Euclidean distances between feature vectors are shown in Figure \ref{fig:feature_distances}.
+\noindent To assess the system the \texttt{test} dataset (11 classes) were treated as the \textit{authorised} subjects, whereas the \texttt{train} dataset (44 classes) were treated as the \textit{input} subjects. The resultant feature vector distances and top matches are shown in Figure \ref{fig:feature_distances} and Figure \ref{fig:rank_plot} respectively.
 
 \begin{figure}[H]
   \centering
@@ -184,10 +185,16 @@ Performing this process results in near-perfect head extractions on which \texti
   \subfloat[Side-On]{\inputpgf{figures/}{side_distances.pgf}}\\
   \subfloat[Combined]{\inputpgf{figures/}{combined_distances.pgf}}
   \end{tabular}
-  \caption{Log Euclidean distances between subjects. Each row represents an \textit{authorised} subject against all \textit{inputs}. See Figure \ref{fig:ccr_plot} for correct classifications.}\label{fig:feature_distances}
+  \caption{Log Euclidean distances between subjects. Each row represents an \textit{authorised} subject against all \textit{inputs}. See Figure \ref{fig:ccr_plot} for correct classifications. Temperature indicates closeness (Yellow [Close], Purple [Far]). }\label{fig:feature_distances}
 \end{figure}
 
+\vspace{-10mm}
+\begin{figure}[H]\centering
+  \inputpgf{figures/}{combined_ranked.pgf}
+  \caption{Top 3 matches (1--3 [Yellow, Orange, Purple]) for each \textit{authorised} class using the combined metric.}\label{fig:rank_plot}
+\end{figure}
 
+\subsection{Accuracy}
 \noindent The side-on and front-on classifiers can both be tuned to achieve 63\% CCR individually, however a focus is placed on assessment of the combined system. Metrics were calculated as:
 \begin{itemize}
   \item \textbf{CCR:} Correct Recognition Rate -- Percentage of \textit{input} subjects who were closest to their corresponding \textit{authorised} subject.
@@ -199,12 +206,10 @@ Performing this process results in near-perfect head extractions on which \texti
 \noindent The EER of 33\% was calculated from the intersect of the FAR and FRR (Figure \ref{fig:eer_plot}), yielding a threshold distance of 0.15. Figure \ref{fig:ccr_plot} shows the accuracy of the system is 91\% (10/11), reduced to 64\% when thresholding (7/11).
 
 \begin{figure}[H]\centering
-  \inputpgf{figures/}{eer_plot.pgf}
+  \inputpgf{figures/}{eer_plot.pgf}\vspace{-3.5mm}
   \caption{EER Plot -- Intercept = (0.15, 0.33)}\label{fig:eer_plot}
 \end{figure}
-
-
-
+\vspace{-5.0mm}
 \begin{figure}[H]\centering
   \inputpgf{figures/}{ccr_plot.pgf}
   \caption{T-CCR Plot -- True positives, false negatives and false positives shown by green, orange, red respectively. Note where classified incorrectly, green identifies the correct class.}\label{fig:ccr_plot}
@@ -212,35 +217,23 @@ Performing this process results in near-perfect head extractions on which \texti
 
 \subsection{Speed}
 \noindent A single recognition took 10.2s running on a CPU (Intel i7 8700K). Much of this time was taken up by the segmentation and keypoint detection performed by neural networks. However, these were integrated with GPU support so when tied with a Nvidia GeForce 1080 Ti this time was 0.6s.
-Note that masks/keypoints can be cached for the validation set.
 
 \section{Discussion}
-
-\ref{fig:feature_distances} clearly shows the diagonal pattern between x=23 and x=32 where each input closely matches the target.
-
-
-It is common for a single extracted feature to perform match badly; this increases the overall distance which leads to the EER threshold having to be increased.
+\subsection{Performance}
+\noindent The results are promising, suggesting that subjects can be differentiated based on their body shape. However, performance is not comparable to facial recognition systems, with modern implementations achieving EERs of 0.08\% and older systems still achieving 4.1\% \cite{facial_rec}. The comparably high EER can largely be attributed to the inter-class variance of the features not being high as shown by Figure \ref{fig:feature_distances}; this implies low confidence in predictions. The results are mostly influenced by the head Hu Moments and height measurement, with which a CCR of  64\% (7/11) could be achieved. The incorporation of other measurements lead to the CCR of 91\%, however it could be deemed that these additions lead to overfitting. Likewise, it is common for a single extracted feature to match badly; this increases the overall distance which leads to the EER threshold having to be increased. This is however hard to assess due to lack of different validation / test sets. The often negative effect of the full-body Hu Moments highlight the issues of recognising by body shape for clothed subjects. Avoiding usage of clothed areas is a challenge in itself and reduces the number of usable features. The overall running time suggests that real-time performance is viable for stills but not video, however, it should be noted that the system was not optimised. \\
 
 \subsection{Improvements}
+\noindent There are many features that could be implemented in the future including but not limited to: edge analysis via Gabor wavelets or training a CNN to find border patterns. More importantly, effort should be placed on making the system fully invariant to subject-to-camera distance and to reduce the effect of limb occlusion/depth. This could be achieved by combining a multi-camera setup that can handle 3D pose estimation with body measurement normalisation (i.e. body ratios).\\
 
+\noindent Classification could also be more adaptable. The side-classifier typically had a higher degree of confidence than the front-classifier. Performance could likely be improved by weighting the components of the combined classifier based on confidence level. This would be especially useful if other views could be added.
 
-\subsection{Considered Approaches}
-Gabor Wavelets
-Insted of applying nearest neighbour to the feature-vectors, bags of features were made on different neig
+\noindent Speed-ups can be achieved by implementing a single CNN for both segmentation and pose estimation; reducing computation by half. Furthermore additional caching could be implemented to stop features being generated multiple times for a single feature-vector.
 
-There is high varience in feature success. Easy to get one outliers. Attempted multiple feature bags so that they could be weighted or combined based on rank.
-
-Clothes are a big issue for moments front-on, that's why side-on is better
-Where possible hu moments were used as they are invarient to scale
 
 \section{Conclusion}
-A system has been proposed that is able to classify individuals purely on body-shape. 
-Although 
-Aim to find 
-Future Work: Try on a larger dataset. High varience in the feature success 
+\noindent A system has been proposed that is able to classify individuals purely on body-shape; this reduces dependency on a subject's face or video source of movement. The system's low-confidence (similarities in distances) highlight the issues with recognising clothed subjects and indicate further views or averaging across a larger dataset would improve performance substantially. Other improvements have been detailed in the discussion.
 
-Have used neural networks trained off the shelve. If enough data was available training a CNN on the silhouettes may be possible.
-\bibliographystyle{IEEEtran}
+\bibliographystyle{IEEEtranUrldate}
 \bibliography{mybibfile}
 
 %\begin{thebibliography}{00}
