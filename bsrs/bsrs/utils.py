@@ -34,7 +34,9 @@ def draw_keypoints(image: np.array, keypoints, radius=1, alpha=1.0):
     return cv.addWeighted(overlay, alpha, image, 1.0 - alpha, 0)
 
 
-def draw_keypoint_numbers(image: np.array, keypoints: List, size: float = 0.5, alpha: float = 1.0) -> np.array:
+def draw_keypoint_numbers(
+    image: np.array, keypoints: List, size: float = 0.5, alpha: float = 1.0
+) -> np.array:
     overlay = image.copy()
     for n, (i, j, p) in enumerate(keypoints):
         if p:
@@ -75,7 +77,9 @@ def _draw_connection(image, point1, point2, color, thickness=1):
     x1, y1, v1 = point1
     x2, y2, v2 = point2
     if v1 and v2:
-        cv.line(image, (int(x1), int(y1)), (int(x2), int(y2)), color, thickness, cv.LINE_AA)
+        cv.line(
+            image, (int(x1), int(y1)), (int(x2), int(y2)), color, thickness, cv.LINE_AA
+        )
     return image
 
 

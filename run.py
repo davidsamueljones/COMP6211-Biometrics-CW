@@ -178,7 +178,6 @@ def train_and_classify(fe_pickle_path: str):
         plt.imshow(ranked, cmap="plasma_r")
         utils.save_fig(fig, name + "_ranked", size=(3.3, 1.2))
 
-
     def cr_metrics(
         distances: np.array, test_paths: List[str], threshold: int, verbose: bool = True
     ) -> Tuple[int, int, Dict]:
@@ -286,17 +285,17 @@ def train_and_classify(fe_pickle_path: str):
         image = utils.draw_connections(image, keypoints, thickness=2, alpha=0.7)
         image = utils.draw_keypoints(image, keypoints, radius=5, alpha=0.8)
         bx, by, bw, bh = cv.boundingRect(fe.contour(path))
-        utils.save_img(image[by:by+bh, bx:bx+bw], save_name)
+        utils.save_img(image[by : by + bh, bx : bx + bw], save_name)
 
     def measurement_img(path: str, save_name: str):
         image = fe.measurements_img(path)
         bx, by, bw, bh = cv.boundingRect(fe.contour(path))
-        utils.save_img(image[by:by+bh, bx:bx+bw], save_name)
+        utils.save_img(image[by : by + bh, bx : bx + bw], save_name)
 
     def head_mask_img(path: str, save_name: str):
         image = fe.head_mask(path)
         bx, by, bw, bh = cv.boundingRect(fe.contour(path, head=True))
-        utils.save_img(image[by-1:by+bh+1, bx-1:bx+bw+1], save_name)
+        utils.save_img(image[by - 1 : by + bh + 1, bx - 1 : bx + bw + 1], save_name)
 
     keypoint_img(train_front_images[0], "front_kp_a")
     keypoint_img(train_side_images[0], "side_kp_a")

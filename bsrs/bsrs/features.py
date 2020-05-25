@@ -1,4 +1,3 @@
-
 import os
 import errno
 import cv2 as cv
@@ -59,7 +58,9 @@ class BodyShapeFE:
             image = cv.imread(path)
             if image is None:
                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
-            self.cache["images"][path] = utils.resize_image(image, height=self.input_height)
+            self.cache["images"][path] = utils.resize_image(
+                image, height=self.input_height
+            )
         return self.cache["images"][path].copy()
 
     def process(self, path: str) -> Dict:
@@ -199,20 +200,20 @@ class BodyShapeFE:
                 )
                 bx, by, bw, bh = cv.boundingRect(contours[0])
                 image = self.image(path).copy()
-                utils.save_img(image[by:by+bh, bx:bx+bw], "mask_input")
+                utils.save_img(image[by : by + bh, bx : bx + bw], "mask_input")
                 indices = np.where(semantic_mask == 0)
                 image[indices[0], indices[1], :] = [0, 0, 0]
-                utils.save_img(image[by:by+bh, bx:bx+bw], "mask_semantic")
+                utils.save_img(image[by : by + bh, bx : bx + bw], "mask_semantic")
                 indices = np.where(mask == 0)
                 image[indices[0], indices[1], :] = [0, 0, 0]
-                utils.save_img(image[by:by+bh, bx:bx+bw], "mask_final")
+                utils.save_img(image[by : by + bh, bx : bx + bw], "mask_final")
                 contours, _ = cv.findContours(
                     mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
                 )
                 contour_img = np.zeros(image.shape)
                 cv.drawContours(contour_img, contours, -1, (255, 255, 255), -1)
                 cv.drawContours(contour_img, contours, -1, (0, 255, 0), 3)
-                utils.save_img(contour_img[by:by+bh, bx:bx+bw], "mask_contour")
+                utils.save_img(contour_img[by : by + bh, bx : bx + bw], "mask_contour")
 
             self.cache["masks"][path] = mask * 255
 
@@ -367,12 +368,20 @@ class BodyShapeFE:
             for i1, i2 in zip(keys, keys[1:]):
                 (x1, y1, p1), (x2, y2, p2) = keypoints[i1], keypoints[i2]
                 if item.startswith("angle_"):
-                    utils._draw_connection(image,  keypoints[i1], keypoints[i2], (255, 0, 0), 2)
+                    utils._draw_connection(
+                        image, keypoints[i1], keypoints[i2], (255, 0, 0), 2
+                    )
                 elif item.startswith("y_"):
-                    utils._draw_connection(image, (x1, y1, p1), (x2, y1, p2), (255, 255, 255), 1)
-                    utils._draw_connection(image, (x2, y1, p1), (x2, y2, p2), (255, 0, 255), 2)
+                    utils._draw_connection(
+                        image, (x1, y1, p1), (x2, y1, p2), (255, 255, 255), 1
+                    )
+                    utils._draw_connection(
+                        image, (x2, y1, p1), (x2, y2, p2), (255, 0, 255), 2
+                    )
                 # elif item.startswith("x_"):
                 #     length += abs(x1 - x2)
                 else:
-                    utils._draw_connection(image, keypoints[i1],  keypoints[i2], (0, 0, 255), 2)
+                    utils._draw_connection(
+                        image, keypoints[i1], keypoints[i2], (0, 0, 255), 2
+                    )
         return image
