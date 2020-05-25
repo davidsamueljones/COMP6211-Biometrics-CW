@@ -263,7 +263,7 @@ def train_and_classify(fe_pickle_path: str):
 
     correct_match_plot(len(train_classes), combined_cr_res)
 
-    ## -- Output Images -- ##
+    # --- Output Images --- #
     os.makedirs("outputs", exist_ok=True)
     os.makedirs("outputs/masks", exist_ok=True)
     os.makedirs("outputs/masks_head", exist_ok=True)
@@ -316,39 +316,6 @@ def train_and_classify(fe_pickle_path: str):
     head_mask_img(train_side_images[6], "side_head_c")
     head_mask_img(test_front_images[9], "front_head_d")
     head_mask_img(test_side_images[9], "side_head_d")
-
-    # plt.figure("Side")
-    # side = feature_distances
-    # plt.imshow(feature_distances, cmap="plasma_r")
-    # plt.figure("Front")
-    # feature_distances = [
-    #     classifier.data[path]["feature_dists"] for path in test_front_images
-    # ]
-    # feature_distances = np.stack(feature_distances)
-    # front = feature_distances
-
-    # plt.imshow(feature_distances, cmap="plasma_r")
-    # fig, ax = plt.subplots(2, 1)
-    # combined = np.stack((front, side), axis=0)
-    # combined = np.mean(combined, axis=0)
-
-    # eer, eer_threshold = calc_eer(test_classes, train_classes, combined)
-
-    # classes = classifier.classes["left"]
-
-    # print("CCR: {:.2f} ({})".format(correct_total / len(test_classes) * 100, correct_total))
-    # print("TCCR: {:.2f} ({})".format(correct_thresholded / len(test_classes) * 100, correct_thresholded))
-    # print("EER: {:.2f}".format(eer * 100))
-    # print("EER Threshold: {:.2f}".format(eer_threshold))
-
-    # rank_combined = np.array(list([scipy.stats.rankdata(row) for row in combined]))
-    # rank_combined[rank_combined > 3] = 4
-    # combined[rank_combined > 3] = np.max(combined)
-    # ax[0].imshow(combined, cmap="plasma_r")
-    # ax[1].imshow(rank_combined, cmap="plasma_r")
-    # plt.show()
-
-
 
 
 if __name__ == "__main__":
